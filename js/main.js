@@ -1,21 +1,5 @@
 var activeOn = [
-    "https://www.njuskalo.hr/motori*",
-    "https://www.njuskalo.hr/*&categoryId=1148&*",
-    "https://www.njuskalo.hr/*&categoryId=12046&*",
-    "https://www.njuskalo.hr/sportski-motori*",
-    "https://www.njuskalo.hr/cestovni-motori*",
-    "https://www.njuskalo.hr/auti*",
-    "https://www.njuskalo.hr/rabljeni-auti*",
-    "https://www.njuskalo.hr/novi-auti*",
-    "https://www.njuskalo.hr/karambolirani-auti*",
-    "https://www.njuskalo.hr/prodaja-kuca*",
-    "https://www.njuskalo.hr/prodaja-stanova*",
-    "https://www.njuskalo.hr/nekretnine*",
-    "https://www.njuskalo.hr/novogradnja*",
-    "https://www.njuskalo.hr/*&categoryId=9580&*",
-    "https://www.njuskalo.hr/*&categoryId=9579&*",
-    "https://www.njuskalo.hr/*&categoryId=12404&*",
-    "https://www.njuskalo.hr/elektricni-bicikli*"
+    "https://suchen.mobile.de/fahrzeuge/search.html*"
 ]
 
 var allImages = {};
@@ -133,7 +117,6 @@ chrome.runtime.onMessage.addListener(
     dbase.createTables();
 
 
-
     sessionStorage.removeItem('pauseAutoPaging');
     if (sessionStorage.getItem("autoPaging")) {
         actionOnDuplicate = sessionStorage.getItem('actionOnDuplicate');
@@ -171,7 +154,7 @@ chrome.runtime.onMessage.addListener(
             msgPort.postMessage({ cmd: messages.deleteTables });
         }
     }
-    if ($('.EntityListFilter.block-standard').length == 0) {
+    if (window.location.href.indexOf("details.html") > 0) {
         //gleda se jedan oglas
         formatMileageAddHP();
         var itemId = window.location.href.substring(window.location.href.lastIndexOf('-') + 1);
@@ -381,9 +364,10 @@ function fixLayoutList() {
 }
 
 function getEntityElements() {
-    var items = $('.EntityList--Regular ul.EntityList-items>li.EntityList-item--Regular');
-    var vauItems = $('.EntityList--VauVau ul.EntityList-items>li.EntityList-item--VauVau');
-    var vauItemsDuplicate = $('.EntityList--Regular ul.EntityList-items>li.EntityList-item--VauVau');
+    var items = $('.cBox.cBox--content.cBox--resultList .cBox-body--resultitem>a.link--muted');
+    var vauItems = $('.cBox-body.cBox-body--topResultitem>a.link--muted');
+    var vauItemsDuplicate = [];
+
     for (var i = 0; i < vauItemsDuplicate.length; i++) {
         var found = false;
         for (var j = 0; j < vauItems.length; j++) {
@@ -786,7 +770,7 @@ function setLoadingDiv(element, itemId) {
 }
 
 function formatMileageList(that) {
-    var element = $($(that[0]).find(".entity-description-main")[0]);
+    var element = $($(that[0]).find(".vehicle-data--ad-with-price-rating-label")[0]);
     var mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeno vozilo, ', '').replace(' km', '').trim());
     if (isNaN(mileage)) {
         mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Testno vozilo, ', '').replace(' km', '').trim());

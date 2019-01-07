@@ -1,5 +1,5 @@
 var activeOn = [
-    "https://suchen.mobile.de/fahrzeuge/search.html*"
+    "https://suchen.mobile.de*"
 ]
 
 var allImages = {};
@@ -156,7 +156,7 @@ chrome.runtime.onMessage.addListener(
     }
     if (window.location.href.indexOf("details.html") > 0) {
         //gleda se jedan oglas
-        formatMileageAddHP();
+        formatAdvert();
         var itemId = window.location.href.substring(window.location.href.lastIndexOf('-') + 1);
 
         var prices = getPrices($('body')[0]);
@@ -191,7 +191,7 @@ chrome.runtime.onMessage.addListener(
                 isLast = true;
                 //console.log('stack: ' + stack.length);
             }
-            formatMileageList($(value));
+            formatAdvert($(value));
             setTimeout(function () {
                 var temp = {
                     el: $(value),
@@ -279,21 +279,6 @@ function scrollonImageClick() {
     });
 }
 
-function formatMileageAddHP(that) {
-    var rows = $('.table-summary tbody tr');
-    var mileage = 0;
-    for (var j = 0; j < rows.length; j++) {
-        if ($($(rows[j]).find('th'))[0].innerHTML == 'Prijeđeni kilometri:') {
-            mileage = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilometri">km</abbr>', ''));
-            $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML.replace(mileage, formatFloat(mileage, 0));
-        }
-        else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
-            var power = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilovati">kWh</abbr>', ''));
-            $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML = power + ' <abbr title="kilovati">kWh</abbr> (' + Math.ceil(power * 1.3428) + ' hp)';
-        }
-    }
-}
-
 function insertPriceHistoryText(priceHistory) {
     //return;
     jQuery('<table/>', {
@@ -302,7 +287,6 @@ function insertPriceHistoryText(priceHistory) {
     }).appendTo($('#priceHistoryText'));
 
     var tableContent = '<thead><tr><td>Datum</td><td>Cijena HRK</td><td>Diff HRK</td><td>Cijena EUR</td><td>Diff EUR</td></tr></thead>';
-    //$('#priceListTable').css('width', '100%');
 
     for (var i = priceHistory.length - 2; i >= 0; i--) {
         var priceHrk = formatFloat(priceHistory[i].priceHRK, 0) + ' HRK';
@@ -312,11 +296,6 @@ function insertPriceHistoryText(priceHistory) {
         tableContent += '<tr><td>' + new Date(priceHistory[i].date).toLocaleDateString('hr') + '</td><td>' + priceHrk + '</td><td>' + priceHrkDiff + '</td><td>' + priceEur + '</td><td>' + priceEurDiff + '</td><tr>';
     }
     $('#priceListTable').html(tableContent);
-    //$('#priceListTable td').css('border', '1px solid black');
-    //$('#priceListTable td').css('padding', '4px');
-    //$('#priceListTable thead td').css('text-align', 'center');
-    //$('#priceListTable tbody td').css('text-align', 'right');
-    //$('#priceListTable tbody td').css('font-family', 'consolas');
 }
 
 function insertPriceHistoryChart(priceHistory) {
@@ -353,16 +332,6 @@ function insertDateFirstViewed(date) {
 
 //#region only list
 
-function fixLayoutList() {
-    //$('.block-standard.EntityListBlock').hide();
-    //$('.js-EntityList--ListItemFeaturedStore').hide();
-    //$('#auxDataTogglerButton').trigger('click');
-    //$('.FlexEmbed').hide();
-    //setTimeout(function () {
-    //	$('body').scrollTop(150);
-    //}, 500);
-}
-
 function getEntityElements() {
     var items = $('.cBox.cBox--content.cBox--resultList .cBox-body--resultitem>a.link--muted');
     var vauItems = $('.cBox-body.cBox-body--topResultitem>a.link--muted');
@@ -371,17 +340,12 @@ function getEntityElements() {
     for (var i = 0; i < vauItemsDuplicate.length; i++) {
         var found = false;
         for (var j = 0; j < vauItems.length; j++) {
-            //console.log(JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-options"].value).id);
-            if (JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-options"].value).id ==
-				JSON.parse($(vauItems[j])[0].attributes["data-options"].value).id) {
+            if (getAdvertIdFromElement($(vauItemsDuplicate[i])[0]) ==
+				getAdvertIdFromElement($(vauItems[j])[0])) {
                 $(vauItemsDuplicate[i]).hide();
                 found = true;
                 break;
             }
-            //$(vauItems[j]).removeClass('EntityList-item--VauVau');
-            //$(vauItems[j]).removeClass('js-EntityList-item--VauVau');
-            //$(vauItems[j]).addClass('EntityList-item--Regular');
-            //$(vauItems[j]).addClass('js-EntityList-item--Regular');
         }
         if (!found) {
             items.push(vauItemsDuplicate[i]);
@@ -391,59 +355,52 @@ function getEntityElements() {
         items.push(vauItems[i]);
     }
 
-    //for (var i = 0; i < items.length; i++) {
-    //	console.log(items[i]);
-    //}
-
     return items;
 }
 
 function setAdditionalInfo(that, isLast) {
-    //var el = this;
-    var currID = JSON.parse(this.el[0].attributes["data-options"].value).id;
+    var currID = getAdvertIdFromElement(this.el[0]);
     var prices = getPrices(this.el[0]);
     var currTitle = $(this.el).find('h3.entity-title a').html();
-    //console.log(currTitle);
-    //var images = getImages();
 
-    setLoadingDiv(this.el, currID);
+    //setLoadingDiv(this.el, currID);
 
-    if (usingDAL) {
-        msgPort.postMessage({
-            cmd: messages.insertNewPrice,
-            data: {
-                itemId: currID,
-                priceHRK: prices.priceHRK,
-                priceEUR: prices.priceEUR
-            }
-        });
+    //if (usingDAL) {
+    //    msgPort.postMessage({
+    //        cmd: messages.insertNewPrice,
+    //        data: {
+    //            itemId: currID,
+    //            priceHRK: prices.priceHRK,
+    //            priceEUR: prices.priceEUR
+    //        }
+    //    });
 
-        msgPort.postMessage({
-            cmd: messages.getPriceHistory,
-            data: { itemId: currID, domItem: this.el }
-        })
-    }
+    //    msgPort.postMessage({
+    //        cmd: messages.getPriceHistory,
+    //        data: { itemId: currID, domItem: this.el }
+    //    })
+    //}
 
-    else {
-        this.el.isLast = this.isLast;
-        //dbase.getPriceHistory(currID, this.el);
-    }
+    //else {
+    //    this.el.isLast = this.isLast;
+    //    //dbase.getPriceHistory(currID, this.el);
+    //}
 
-    var link = this.el.find('h3 a')[0].href;
-    this.el.url = link;
-    $.ajax({
-        url: link,
-        async: true,
-        cache: true,
-        success: getAdditionalItemInfoCallback.bind(this.el),
-        //success: function (response) {
-        //	//var images = getImages(response);
-        //},
-        error: function (response) {
-            //that.find('.loadingDiv').hide();
-            console.log('error');
-        }
-    });
+    //var link = this.el.find('h3 a')[0].href;
+    //this.el.url = link;
+    //$.ajax({
+    //    url: link,
+    //    async: true,
+    //    cache: true,
+    //    success: getAdditionalItemInfoCallback.bind(this.el),
+    //    //success: function (response) {
+    //    //	//var images = getImages(response);
+    //    //},
+    //    error: function (response) {
+    //        //that.find('.loadingDiv').hide();
+    //        console.log('error');
+    //    }
+    //});
 }
 
 function checkBeforeMerge(newAdvert, oldAdvert, temp) {
@@ -769,26 +726,26 @@ function setLoadingDiv(element, itemId) {
     $(element.find('.entity-description-main')[0]).css('float', 'left');
 }
 
-function formatMileageList(that) {
-    var element = $($(that[0]).find(".vehicle-data--ad-with-price-rating-label")[0]);
-    var mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeno vozilo, ', '').replace(' km', '').trim());
-    if (isNaN(mileage)) {
-        mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Testno vozilo, ', '').replace(' km', '').trim());
-        if (isNaN(mileage)) {
-            mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeni motor, ', '').replace(' km', '').trim());
-            if (isNaN(mileage)) {
-                return;
-            }
-        }
-    }
-    element.html(element.html().replace(mileage, formatFloat(mileage, 0)));
-}
+//function formatMileageList(that) {
+//    var element = $($(that[0]).find(".vehicle-data--ad-with-price-rating-label")[0]);
+//    var mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeno vozilo, ', '').replace(' km', '').trim());
+//    if (isNaN(mileage)) {
+//        mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Testno vozilo, ', '').replace(' km', '').trim());
+//        if (isNaN(mileage)) {
+//            mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeni motor, ', '').replace(' km', '').trim());
+//            if (isNaN(mileage)) {
+//                return;
+//            }
+//        }
+//    }
+//    element.html(element.html().replace(mileage, formatFloat(mileage, 0)));
+//}
 
 function getAdditionalItemInfoCallback(response) {
-    this.find('.loadingDiv').hide();
-    var images = getImages(response);
+    //this.find('.loadingDiv').hide();
+    //var images = getImages(response);
 
-    allImages[JSON.parse(this[0].attributes["data-options"].value).id] = images;
+    //allImages[getAdvertIdFromElement(this[0])] = images;
 
     var username = $(response).find('.Profile-wrapUsername a').attr('href');
     //return;
@@ -932,7 +889,7 @@ function getAdditionalItemInfoCallback(response) {
     $(this.find('#entity-description-rest')[0]).css('padding-right', '50px');
 
     //insert new price
-    var currID = JSON.parse(this[0].attributes["data-options"].value).id;
+    var currID = getAdvertIdFromElement(this[0]);
     var prices = getPrices(this);
     var mainDesc = $(this).find('.entity-description-main').html().trim();
 
@@ -1042,10 +999,8 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
         if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date()).toLocaleDateString('hr')) {
             $('#historyBtnList' + itemId).css('background-color', '#cc002c');
             $('#historyBtnList' + itemId).addClass('newPrice');
-            summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
-            //summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
-            summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
-            //console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
+            summary.newPrices.push(getAdvertIdFromElement(jQueryElement));
+            summary.newPrices2[getAdvertIdFromElement(jQueryElement)] = jQueryElement[0].innerText;
         }
 
         if (i == priceHistory.length - 1) {
@@ -1079,12 +1034,8 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
     }
     var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
     if (elapsedDays == 0) {
-        summary.newAds.push(JSON.parse(jQueryElement.attr('data-options')).id);
-        //summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
-        summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
-        //console.log("new ad: " + JSON.parse(jQueryElement.attr('data-options')).id);
-        //jQueryElement.removeClass('EntityList-item--Regular');
-        //jQueryElement.removeClass('js-EntityList-item--Regular');
+        summary.newAds.push(getAdvertIdFromElement(jQueryElement));;
+        summary.newAds2[getAdvertIdFromElement(jQueryElement)] = jQueryElement[0].innerText;
         jQueryElement.addClass('EntityList-item--New');
         jQueryElement.addClass('js-EntityList-item--New');
         jQueryElement.find('.entity-pub-date')[0].innerHTML += '<br/>';
@@ -1112,7 +1063,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
 }
 
 function insertChart(that) {
-    var itemId = JSON.parse(that[0].attributes["data-options"].value).id;
+    var itemId = getAdvertIdFromElement(that[0]);
     jQuery('<div/>', {
         id: 'chart_div' + itemId,
         text: ''
@@ -1360,10 +1311,15 @@ function getPrices(element) {
     priceHRK = parseInt(priceHRK);
     priceEUR = parseInt(priceEUR);
 
-    return {
+    var toReturn = {
         priceHRK: priceHRK,
         priceEUR: priceEUR
-    }
+    };
+
+    console.log(toReturn);
+    
+
+    return toReturn;
 }
 
 function onGetHistory(tx, results) {
@@ -1617,5 +1573,6 @@ function drawChart(elementId, priceHistory) {
 function getPosition(string, subString, index) {
     return string.split(subString, index).join(subString).length;
 }
+
 
 //#endregion

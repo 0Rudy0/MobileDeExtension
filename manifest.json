@@ -19,7 +19,8 @@
     "content_scripts": [
         {
           "matches": [
-            "https://suchen.mobile.de/fahrzeuge/search.html*"
+            "https://suchen.mobile.de/fahrzeuge/search.html*",
+            "https://suchen.mobile.de/*"
           ],
           "css": [
             "css/imageSlider.css",
@@ -27,6 +28,7 @@
             "css/mergeModal.css",
             "css/morris.css",
             "css/main.css",
+            "css/mobileDe.css",
             "css/prettify.min.css",
             "css/settingsModal.css"
           ],
@@ -42,6 +44,7 @@
             "js/email.min.js",
             "js/mainAppending.js",
             "js/ApiKeys.js",
+            "js/mobileDe.js",
             "js/main.js"
           ]
         }

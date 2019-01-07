@@ -1,0 +1,23 @@
+﻿.page-centered>.viewport {
+    width: 90%; 
+}
+
+.link--muted.no--text--decoration.result-item > .g-row > .g-col-9 > .g-row:nth-child(2) > .g-col-12:nth-child(2),
+.link--muted.no--text--decoration > .g-row > .g-col-9 > .g-row:nth-child(2) > .g-col-12:nth-child(2),
+.cBox-body.cBox-body--resultitem > .g-row > .g-col-9 > .g-row:nth-child(3) > .g-col-12:nth-child(2),
+.cBox-body.cBox-body--topResultitem > .g-row > .g-col-8 > .g-row:nth-child(3) > .g-col-12:nth-child(2),
+.cBox-body.cBox-body--eyeCatcher > .g-row > .g-col-8 > .g-row:nth-child(3) > .g-col-12:nth-child(2) {
+    width: auto;
+    position: absolute;
+    top: 90px;
+    left: 270px;
+}
+
+.mde-price-rating__badge {
+    float: right;
+}
+
+.h2.u-block.u-text-red.u-text-line-through,
+.financing-integration-lp-links.u-text-meta {
+    display: none;
+}
